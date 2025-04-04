@@ -7,29 +7,20 @@ return {
     },
   },
 
-  -- 🚀 LSP Configuration (Pyright, Ruff, Ruff-LSP)
+  -- 🚀 LSP Configuration (Pyright + Ruff LSP)
   {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
         pyright = {}, -- Type checking & autocomplete
         basedpyright = {},
-        ruff = {
-          cmd_env = { RUFF_TRACE = "messages" },
+
+        ruff_lsp = {
           init_options = {
-            settings = { logLevel = "error" },
-          },
-          keys = {
-            {
-              "<leader>co",
-              function()
-                vim.lsp.buf.execute_command({ command = "ruff.applyOrganizeImports" })
-              end,
-              desc = "Organize Imports",
+            settings = {
+              logLevel = "error", -- or "debug" for verbose logs
             },
           },
-        },
-        ruff_lsp = {
           keys = {
             {
               "<leader>co",
@@ -41,21 +32,26 @@ return {
           },
         },
       },
+
       setup = {
-        ["ruff"] = function()
+        ["ruff_lsp"] = function(_, opts)
           LazyVim.lsp.on_attach(function(client, _)
-            -- Disable hover in favor of Pyright
-            client.server_capabilities.hoverProvider = false
+            if client.name == "ruff_lsp" then
+              client.server_capabilities.hoverProvider = false -- let pyright handle hover
+            end
           end)
+          require("lspconfig").ruff_lsp.setup(opts)
+          return true
         end,
       },
     },
   },
 
   -- 🧪 Neotest for Python Testing
-  {
-    "nvim-neotest/neotest-python",
-  },
+  { "nvim-neotest/neotest-python" },
+
+  -- 💬 Comments
+  { "preservim/nerdcommenter" },
 
   -- 🐍 Debugging with nvim-dap-python
   {
